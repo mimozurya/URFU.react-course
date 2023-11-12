@@ -1,6 +1,9 @@
-import React, { useState } from "react"; // useState - хук
+import React, { useState, useEffect, useMemo } from "react"; // useState - хук
 import Post from "./component/post/Post";
 import Modal from "./component/Modal/Modal";
+import axios from "axios";
+
+const PAGE_SIZE = 10;
 
 const App = () => {
 
@@ -13,37 +16,58 @@ const App = () => {
         setPosts([...posts, newPost]);
     }
 
-    const [input, setInput] = useState('');
+    const [filter, setFilter] = useState({
+        searching: '',
+        page: 1,
+    })
+
     const [open, setOpen] = useState(false);
 
-    const [posts, setPosts] = useState([
-        {
-            userId: 1,
-            id: 1,
-            title: "sunt aut facere repellat provident occaecati excepturi optio reprehenderit",
-            body: "quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto"
-        },
-        {
-            userId: 1,
-            id: 2,
-            title: "qui est esse",
-            body: "est rerum tempore vitae\nsequi sint nihil reprehenderit dolor beatae ea dolores neque\nfugiat blanditiis voluptate porro vel nihil molestiae ut reiciendis\nqui aperiam non debitis possimus qui neque nisi nulla"
-        },
-    ]);
+    const [posts, setPosts] = useState([]);
+
+    useEffect(() => {
+        axios
+            .get('https://jsonplaceholder.typicode.com/posts')
+            .then(res => res.data).then(data => setPosts(data))
+            .catch((err) => setPosts([]));
+    }, []);
+
+    const filteredPosts = useMemo(() => {
+        if (!posts.length) return [];
+
+        const { searching, page } = filter;
+
+        const result = posts.filter(post =>
+            post.title.toLowerCase().includes(searching.toLowerCase())
+        ).slice(PAGE_SIZE * (page - 1), 10 + PAGE_SIZE * (page - 1));
+        return result
+    }, [posts, filter]);
 
     return (
         <div className="container">
-            {input}
-            <input className="post-input" value={input} onChange={(e) => setInput(e.target.value)} placeholder="Создать" />
-            <div className="post-list">
-                {posts.map((post) => (
-                    <Post key={post.id} data={post} />
-                ))}
-            </div>
+            <input
+                className="post-input"
+                value={filter.searching}
+                onChange={(e) => setFilter({
+                    searching: e.target.value,
+                    page: 1
+                })}
+                placeholder="Создать" />
+            {
+                posts.length ?
+                    <div className="post-list">
+                        {filteredPosts.map((post) => (
+                            <Post key={post.id} data={post} />
+                        ))}
+                    </div> : (
+                        <h2>Постов нет</h2>
+                    )
+            }
+
             <button onClick={() => setOpen(true)}>Добавить</button>
             <Modal open={open} addPost={addPost} close={() => setOpen(false)} />
         </div>
     );
 }
-// 1:37:29
+
 export default App;

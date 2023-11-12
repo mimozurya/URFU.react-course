@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from './Modal.module.css';
 import classNames from "classnames";
 
@@ -14,6 +14,7 @@ const Modal = (props) => {
         if (newPost.title) {
             addPost(newPost);
             close();
+            setNewPost({title: '', body: ''});
         }
     }
 
@@ -22,9 +23,20 @@ const Modal = (props) => {
         body: '',
     });
 
+    useEffect(() => {
+        if (!open) {
+            setNewPost({title: '', body: ''});
+        }
+    }, [open]);
+
     return (
-        <div className={classNames(styles['modal-container'], { [styles.open]: open })}> 
-            <div className={styles['modal']}>
+        <div
+            onClick={close}
+            className={classNames(styles['modal-container'],
+                {
+                    [styles.open]: open,
+                })}>
+            <div className={styles['modal']} onClick={(e) => e.stopPropagation()}>
                 <h6 className={styles['modal__title']}>Добавить пост</h6>
                 <input value={newPost.title} onChange={(e) => updatePost('title', e.target.value)} className={styles['modal__input']} placeholder="Название поста" />
                 <textarea value={newPost.body} onChange={(e) => updatePost('body', e.target.value)} className={styles['modal__textarea']} placeholder="Описание поста" />
